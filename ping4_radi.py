@@ -52,14 +52,17 @@ class SpreadsheetApp(QMainWindow):
                     row_hidden = False
                     break
             self.table_widget.setRowHidden(row, row_hidden)
+            
 
     def cell_clicked(self, row, col):
-        ip_address = self.table_widget.item("IP PM", col).text()
+        ip_address = self.table_widget.item(row, col).text()
         if self.ping(ip_address):
             self.table_widget.item(row, col).setForeground(QColor('green'))
         else:
             self.table_widget.item(row, col).setForeground(QColor('red'))
+        self.table_widget.setCurrentCell(-1, -1)
 
+    
     def ping(self, ip_address):
         response = subprocess.Popen(["ping", "-n", "1", "-w", "500", ip_address], stdout=subprocess.PIPE).stdout.read()
         return "Reply from" in str(response)

@@ -43,17 +43,18 @@ class SpreadsheetApp(QMainWindow):
                 item = QTableWidgetItem(str(cell_data))
                 item.setFlags(item.flags() ^ Qt.ItemIsEditable)
                 self.table_widget.setItem(i, j, item)
-        #self.table_widget.cellClicked.connect(self.cell_clicked)
-        self.table_widget.cellClicked.connect(lambda row, col: self.cell_clicked(row, col))
-
+        self.table_widget.cellClicked.connect(self.cell_clicked)
 
         self.search_label = QLabel("Search:")
         self.search_edit = QLineEdit()
         self.search_edit.textChanged.connect(self.filter_table)
+        self.search_edit.returnPressed.connect(self.filter_table) # new line
         self.search_layout.addWidget(self.search_label)
         self.search_layout.addWidget(self.search_edit)
 
+
     def filter_table(self):
+        self.search_edit.returnPressed.connect(self.filter_table)
         search_text = self.search_edit.text()
         for row in range(self.table_widget.rowCount()):
             row_hidden = True
@@ -64,6 +65,7 @@ class SpreadsheetApp(QMainWindow):
                     break
             self.table_widget.setRowHidden(row, row_hidden)
 
+  
     def cell_clicked(self, row, col):
         ip_address = self.table_widget.item(row, col).text()
         if self.ping(ip_address):
@@ -72,6 +74,16 @@ class SpreadsheetApp(QMainWindow):
         else:
             self.table_widget.item(row, col).setForeground(QColor('red'))
 
+    
+    def keyPressEvent(self, event):
+        if event.key() == Qt.Key_Return or event.key() == Qt.Key_Enter:
+            selected_item = self.table_widget.currentItem()
+            if selected_item:
+                row = selected_item.row()
+                col = selected_item.column()
+                self.cell_clicked(row, col)
+    
+    
     def ping(self, ip_address):
         response = subprocess.Popen(["ping", "-n", "1", "-w", "500", ip_address], stdout=subprocess.PIPE).stdout.read()
         return "Reply from" in str(response)
@@ -79,7 +91,7 @@ class SpreadsheetApp(QMainWindow):
     def ping_all(self):
         while True:
             for row in range(self.table_widget.rowCount()):
-                for column in range(self.table_widget.columnCount()):
+                for column in range(self.table_widget.columnCount(3, 4, 5)):
                     item = self.table_widget.item(row, column)
                     ip_address = item.text()
                     if self.ping(ip_address):
@@ -93,3 +105,4 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
     spreadsheet = SpreadsheetApp()
     sys.exit(app.exec_())
+
